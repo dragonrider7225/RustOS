@@ -1,5 +1,5 @@
 [package]
-name = "RustOS"
+name = "rust_os"
 version = "0.1.0"
 authors = ["Kevin Moonen <dragonrider7225@gmail.com>"]
 edition = "2018"
