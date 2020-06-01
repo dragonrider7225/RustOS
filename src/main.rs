@@ -13,5 +13,6 @@ fn panic(info: &PanicInfo) -> ! {
 /// The entry point for the binary.
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+    rust_os::write_to_vga_buffer(b"Hello, World!");
     loop {}
 }
