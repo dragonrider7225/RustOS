@@ -1,6 +1,9 @@
 # RustOS
 An OS written in Rust based on reading [https://os.phil-opp.com/]
 
-This project requires `cargo-xbuild` because `::core`, `::compiler_builtins`,
-and `::alloc` need to be built for custom target triples.
-To install `cargo-xbuild`, run `$ cargo install cargo-xbuild`.
+## Build
+To build this project, run `$ ./install_deps.sh && cargo bootimage`
+
+## Run
+To run this project in QEMU, ensure that QEMU is on the path and run `$ cargo
+xrun`
