@@ -236,3 +236,61 @@ impl fmt::Write for Writer {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use crate::{print, println};
+
+    const TEST_PREFIX: &'static str = "[rust_os::io::vga_text]";
+
+    #[test_case]
+    fn test_color_from_0() {
+        print!("{} test_color_from_0... ", TEST_PREFIX);
+        assert!(Color::try_from(0x00).ok().is_some());
+        println!("[ok]");
+    }
+
+    #[test_case]
+    fn test_color_from_7() {
+        print!("{} test_color_from_7... ", TEST_PREFIX);
+        assert!(Color::try_from(0x07).ok().is_some());
+        println!("[ok]");
+    }
+
+    #[test_case]
+    fn test_color_from_8() {
+        print!("{} test_color_from_8... ", TEST_PREFIX);
+        assert!(Color::try_from(0x08).ok().is_none());
+        println!("[ok]");
+    }
+
+    #[test_case]
+    fn test_vga_println_succeeds() {
+        print!("{} test_vga_println_succeeds... ", TEST_PREFIX);
+        vga_println!("Testing VGA println");
+        println!("[ok]");
+    }
+
+    #[test_case]
+    fn test_vga_println_many() {
+        print!("{} test_vga_println_many... ", TEST_PREFIX);
+        for _ in 0..200 {
+            vga_println!();
+        }
+        println!("[ok]");
+    }
+
+    #[test_case]
+    fn test_println_output() {
+        print!("{} test_println_output... ", TEST_PREFIX);
+        let s = "Some test string that fits on a single line";
+        vga_println!("{}", s);
+        for (i, b) in s.bytes().enumerate() {
+            let screen_byte = WRITER.lock().buffer.chars[Buffer::HEIGHT - 2][i].read();
+            assert_eq!(screen_byte.c, b);
+        }
+        println!("[ok]");
+    }
+}
