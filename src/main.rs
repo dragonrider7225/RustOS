@@ -2,32 +2,41 @@
 
 #![no_std]
 #![no_main]
+#![feature(const_raw_ptr_to_usize_cast)]
+#![feature(panic_info_message)]
+// Required for `cargo xtest`.
+#![feature(custom_test_frameworks)]
+#![test_runner(rust_os::test_runner)]
+#![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
 
-use rust_os::println;
+#[macro_use]
+extern crate rust_os;
 
-use rust_os::io::{self, vga_text::{BackgroundColor, CharColor, TextColor}};
+use rust_os::{
+    io::vga_text::{BackgroundColor, TextColor, Writer},
+    qemu::{self, QemuExitCode},
+};
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    rust_os::panic(info)
+    if cfg!(test) {
+        rust_os::test_panic(info)
+    } else {
+        rust_os::no_test_panic(info)
+    }
 }
 
 /// The entry point for the binary.
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    let text = "Hello, World!";
-    let mut counter = 0;
-    io::stdout().set_color(CharColor::from((BackgroundColor::SOLID_BLACK, TextColor::LIGHT_CYAN)));
-    println!("Solid black, light cyan");
-    io::stdout().set_color(CharColor::from((BackgroundColor::BLINK_BLACK, TextColor::LIGHT_CYAN)));
-    println!("Blink black, light cyan");
-    while counter < 10 {
-        io::stdout().set_color(CharColor(0x7b ^ ((counter & 0xF) << 4) as u8));
-        println!("{}", text);
-        counter += 1;
-        for _ in 0..=1_300_000 {}
-    }
-    panic!()
+    rust_os::draw_vga_test();
+
+    #[cfg(test)]
+    test_main();
+
+    // TODO: event loop
+
+    qemu::exit_qemu(QemuExitCode::Success)
 }

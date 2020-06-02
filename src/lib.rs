@@ -1,18 +1,62 @@
-//! The actual implementation of the OS.
-
 #![no_std]
-#![feature(const_raw_ptr_to_usize_cast)]
-#![feature(panic_info_message)]
+#![cfg_attr(test, no_main)]
+#![feature(custom_test_frameworks)]
+#![test_runner(crate::test_runner)]
+#![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
 
 pub mod io;
 
-use io::vga_text::CharColor;
+use io::vga_text::Writer;
 
-/// A function that can handle a panic. This is the simplest way to never return.
-pub fn panic(info: &PanicInfo) -> ! {
-    io::stdout().set_color(CharColor(0x0b));
-    println!("{}", info);
+pub mod qemu;
+
+use qemu::QemuExitCode;
+
+/// Draws the available pairs of background and text colors.
+pub fn draw_vga_test() {
+    for bg_color in BackgroundColor::colors() {
+        for text_color in TextColor::colors() {
+            set_vga_color!((bg_color, text_color));
+            vga_print!("X");
+        }
+        vga_println!();
+    }
+}
+
+pub fn test_runner(tests: &[&dyn Fn()]) {
+    serial_println!("Running {} tests", tests.len());
+    tests.iter().for_each(|test| test());
+    serial_println!("All tests succeeded");
+
+    qemu::exit_qemu(QemuExitCode::Success);
+}
+
+pub fn test_panic(info: &PanicInfo) -> ! {
+    serial_println!("[failed]\n");
+    serial_println!("Error: {}\n", info);
+
+    qemu::exit_qemu(QemuExitCode::Failure)
+}
+
+pub fn no_test_panic(info: &PanicInfo) -> ! {
+    set_stdout_color!(Writer::DEFAULT_COLOR_PAIR);
+    println!("{}\n", info);
+
+    qemu::exit_qemu(QemuExitCode::Failure)
+}
+
+#[cfg(test)]
+#[panic_handler]
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    test_panic(info)
+}
+
+/// Entry point for `cargo xtest` for the library.
+#[cfg(test)]
+#[no_mangle]
+pub extern "C" fn _start() -> ! {
+    test_main();
     loop {}
 }
