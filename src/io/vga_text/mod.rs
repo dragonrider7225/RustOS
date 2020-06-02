@@ -1,4 +1,7 @@
-use core::{convert::TryFrom, fmt};
+use core::{
+    convert::TryFrom,
+    fmt::{self, Arguments, Write},
+};
 
 use lazy_static::lazy_static;
 
@@ -299,7 +302,7 @@ impl Writer {
     }
 }
 
-impl fmt::Write for Writer {
+impl Write for Writer {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         self.write(s.bytes());
         Ok(())
