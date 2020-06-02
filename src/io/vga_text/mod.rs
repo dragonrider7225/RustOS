@@ -237,6 +237,31 @@ impl fmt::Write for Writer {
     }
 }
 
+#[doc(hidden)]
+pub fn _print(args: Arguments) {
+    super::print_to(&mut *WRITER.lock(), args, "VGA port");
+}
+
+#[macro_export]
+macro_rules! vga_print {
+    ($($arg:tt)*) => ($crate::io::vga_text::_print(format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! vga_println {
+    () => ($crate::vga_print!("\n"));
+    ($($arg:tt)*) => ($crate::vga_print!("{}\n", format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! set_vga_color {
+    ($color:expr) => {
+        $crate::io::vga_text::WRITER
+            .lock()
+            .set_color($crate::io::vga_text::CharColor::from($color))
+    };
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
