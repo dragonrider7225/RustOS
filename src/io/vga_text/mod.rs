@@ -190,6 +190,9 @@ lazy_static! {
 }
 
 impl Writer {
+    pub const DEFAULT_COLOR_PAIR: (BackgroundColor, TextColor) =
+        (BackgroundColor::SOLID_BLACK, TextColor::LIGHT_GREEN);
+
     pub fn crlf(&mut self) {
         for line in 1..Buffer::HEIGHT {
             for col in 0..Buffer::CHARS_PER_LINE {
