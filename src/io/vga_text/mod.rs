@@ -20,6 +20,23 @@ pub enum Color {
     LightGray,
 }
 
+impl Color {
+    pub fn colors() -> impl Iterator<Item = Self> {
+        [
+            Self::Black,
+            Self::Blue,
+            Self::Green,
+            Self::Cyan,
+            Self::Red,
+            Self::Magenta,
+            Self::Brown,
+            Self::LightGray,
+        ]
+        .iter()
+        .copied()
+    }
+}
+
 impl Into<u8> for Color {
     fn into(self) -> u8 {
         match self {
@@ -76,6 +93,29 @@ impl BackgroundColor {
     pub const BLINK_MAGENTA: Self = Self::Blink(Color::Magenta);
     pub const BLINK_BROWN: Self = Self::Blink(Color::Brown);
     pub const BLINK_LIGHT_GRAY: Self = Self::Blink(Color::LightGray);
+
+    pub fn colors() -> impl Iterator<Item = Self> {
+        [
+            Self::SOLID_BLACK,
+            Self::SOLID_BLUE,
+            Self::SOLID_GREEN,
+            Self::SOLID_CYAN,
+            Self::SOLID_RED,
+            Self::SOLID_MAGENTA,
+            Self::SOLID_BROWN,
+            Self::SOLID_LIGHT_GRAY,
+            Self::BLINK_BLACK,
+            Self::BLINK_BLUE,
+            Self::BLINK_GREEN,
+            Self::BLINK_CYAN,
+            Self::BLINK_RED,
+            Self::BLINK_MAGENTA,
+            Self::BLINK_BROWN,
+            Self::BLINK_LIGHT_GRAY,
+        ]
+        .iter()
+        .copied()
+    }
 }
 
 impl Into<u8> for BackgroundColor {
@@ -123,6 +163,29 @@ impl TextColor {
     pub const PINK: Self = Self::Light(Color::Magenta);
     pub const YELLOW: Self = Self::Light(Color::Brown);
     pub const WHITE: Self = Self::Light(Color::LightGray);
+
+    pub fn colors() -> impl Iterator<Item = Self> {
+        [
+            Self::BLACK,
+            Self::BLUE,
+            Self::GREEN,
+            Self::CYAN,
+            Self::RED,
+            Self::MAGENTA,
+            Self::BROWN,
+            Self::LIGHT_GRAY,
+            Self::DARK_GRAY,
+            Self::LIGHT_BLUE,
+            Self::LIGHT_GREEN,
+            Self::LIGHT_CYAN,
+            Self::LIGHT_RED,
+            Self::PINK,
+            Self::YELLOW,
+            Self::WHITE,
+        ]
+        .iter()
+        .copied()
+    }
 }
 
 impl Into<u8> for TextColor {
