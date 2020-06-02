@@ -152,7 +152,10 @@ pub struct CharColor(pub u8);
 
 impl From<(BackgroundColor, TextColor)> for CharColor {
     fn from((bg_color, text_color): (BackgroundColor, TextColor)) -> Self {
-        Self((<BackgroundColor as Into<u8>>::into(bg_color)) << 4 | <TextColor as Into<u8>>::into(text_color))
+        Self(
+            (<BackgroundColor as Into<u8>>::into(bg_color)) << 4
+                | <TextColor as Into<u8>>::into(text_color),
+        )
     }
 }
 
@@ -208,7 +211,7 @@ impl Writer {
 
     pub fn write<Bytes>(&mut self, bytes: Bytes)
     where
-      Bytes: IntoIterator<Item = u8>,
+        Bytes: IntoIterator<Item = u8>,
     {
         bytes.into_iter().for_each(|byte| self.write_byte(byte));
     }
