@@ -8,6 +8,8 @@
 
 use core::panic::PanicInfo;
 
+pub mod cpu_exception;
+
 /// Tools for input and output of bytes.
 pub mod io;
 
