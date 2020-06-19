@@ -9,21 +9,38 @@ use spin::Mutex;
 
 use volatile::Volatile;
 
-/// A color that can be used in VGA text mode.
+/// The base for two colors that can be used in CGA text mode.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
-pub enum Color {
+pub enum CgaColor {
+    /// A black or dark gray color. The RGB for the dark form of this color is `#000000`. The RGB
+    /// for the light form of this color is `#555555`.
     Black,
+    /// A blue color. The RGB for the dark form of this color is `#0000AA`. The RGB for the light
+    /// form of this color is `#5555FF`.
     Blue,
+    /// A green color. The RGB for the dark form of this color is `#00AA00`. The RGB for the light
+    /// form of this color is `#55FF55`.
     Green,
+    /// A cyan color. The RGB for the dark form of this color is `#00AAAA`. The RGB for the light
+    /// form of this color is `#55FFFF`.
     Cyan,
+    /// A red color. The RGB for the dark form of this color is `#AA0000`. The RGB for the light
+    /// form of this color is `#FF5555`.
     Red,
+    /// A magenta or pink color. The RGB for the dark form of this color is `#AA00AA`. The RGB for
+    /// the light form of this color is `#FF55FF`.
     Magenta,
+    /// A brown or yellow color. The RGB for the dark form of this color is `#AA5500`. The RGB for
+    /// the light form of this color is `#FFFF55`.
     Brown,
+    /// A light gray or white color. The RGB for the dark form of this color is `#AAAAAA`. The RGB
+    /// for the light form of this color is `#FFFFFF`.
     LightGray,
 }
 
-impl Color {
+impl CgaColor {
+    /// Get an iterator over the available base colors.
     pub fn colors() -> impl Iterator<Item = Self> {
         [
             Self::Black,
@@ -40,7 +57,7 @@ impl Color {
     }
 }
 
-impl Into<u8> for Color {
+impl Into<u8> for CgaColor {
     fn into(self) -> u8 {
         match self {
             Self::Black => 0x00,
@@ -55,7 +72,7 @@ impl Into<u8> for Color {
     }
 }
 
-impl TryFrom<u8> for Color {
+impl TryFrom<u8> for CgaColor {
     type Error = u8;
 
     fn try_from(b: u8) -> Result<Self, Self::Error> {
@@ -73,30 +90,55 @@ impl TryFrom<u8> for Color {
     }
 }
 
+/// A color that can be used for the background in VGA text mode. Each of the eight base colors can
+/// be used as the background color and each color can optionally make text on it blink. Some
+/// implementations of VGA text use the light form of the base color instead of making the text
+/// blink.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BackgroundColor {
-    NoBlink(Color),
-    Blink(Color),
+    /// Make the background color `self.0`.
+    NoBlink(CgaColor),
+    /// Make the background color `self.0` and make the text blink. Some implementations of VGA
+    /// text instead make the background color the light form of `self.0` and don't make the text
+    /// blink.
+    Blink(CgaColor),
 }
 
 impl BackgroundColor {
-    pub const SOLID_BLACK: Self = Self::NoBlink(Color::Black);
-    pub const SOLID_BLUE: Self = Self::NoBlink(Color::Blue);
-    pub const SOLID_GREEN: Self = Self::NoBlink(Color::Green);
-    pub const SOLID_CYAN: Self = Self::NoBlink(Color::Cyan);
-    pub const SOLID_RED: Self = Self::NoBlink(Color::Red);
-    pub const SOLID_MAGENTA: Self = Self::NoBlink(Color::Magenta);
-    pub const SOLID_BROWN: Self = Self::NoBlink(Color::Brown);
-    pub const SOLID_LIGHT_GRAY: Self = Self::NoBlink(Color::LightGray);
-    pub const BLINK_BLACK: Self = Self::Blink(Color::Black);
-    pub const BLINK_BLUE: Self = Self::Blink(Color::Blue);
-    pub const BLINK_GREEN: Self = Self::Blink(Color::Green);
-    pub const BLINK_CYAN: Self = Self::Blink(Color::Cyan);
-    pub const BLINK_RED: Self = Self::Blink(Color::Red);
-    pub const BLINK_MAGENTA: Self = Self::Blink(Color::Magenta);
-    pub const BLINK_BROWN: Self = Self::Blink(Color::Brown);
-    pub const BLINK_LIGHT_GRAY: Self = Self::Blink(Color::LightGray);
+    /// The non-blink form of `Color::Black`.
+    pub const SOLID_BLACK: Self = Self::NoBlink(CgaColor::Black);
+    /// The non-blink form of `Color::Blue`.
+    pub const SOLID_BLUE: Self = Self::NoBlink(CgaColor::Blue);
+    /// The non-blink form of `Color::Green`.
+    pub const SOLID_GREEN: Self = Self::NoBlink(CgaColor::Green);
+    /// The non-blink form of `Color::Cyan`.
+    pub const SOLID_CYAN: Self = Self::NoBlink(CgaColor::Cyan);
+    /// The non-blink form of `Color::Red`.
+    pub const SOLID_RED: Self = Self::NoBlink(CgaColor::Red);
+    /// The non-blink form of `Color::Magenta`.
+    pub const SOLID_MAGENTA: Self = Self::NoBlink(CgaColor::Magenta);
+    /// The non-blink form of `Color::Brown`.
+    pub const SOLID_BROWN: Self = Self::NoBlink(CgaColor::Brown);
+    /// The non-blink form of `Color::LightGray`.
+    pub const SOLID_LIGHT_GRAY: Self = Self::NoBlink(CgaColor::LightGray);
+    /// The blink form of `Color::Black`.
+    pub const BLINK_BLACK: Self = Self::Blink(CgaColor::Black);
+    /// The blink form of `Color::Blue`.
+    pub const BLINK_BLUE: Self = Self::Blink(CgaColor::Blue);
+    /// The blink form of `Color::Green`.
+    pub const BLINK_GREEN: Self = Self::Blink(CgaColor::Green);
+    /// The blink form of `Color::Cyan`.
+    pub const BLINK_CYAN: Self = Self::Blink(CgaColor::Cyan);
+    /// The blink form of `Color::Red`.
+    pub const BLINK_RED: Self = Self::Blink(CgaColor::Red);
+    /// The blink form of `Color::Magenta`.
+    pub const BLINK_MAGENTA: Self = Self::Blink(CgaColor::Magenta);
+    /// The blink form of `Color::Brown`.
+    pub const BLINK_BROWN: Self = Self::Blink(CgaColor::Brown);
+    /// The blink form of `Color::LightGray`.
+    pub const BLINK_LIGHT_GRAY: Self = Self::Blink(CgaColor::LightGray);
 
+    /// Get an iterator over the background colors.
     pub fn colors() -> impl Iterator<Item = Self> {
         [
             Self::SOLID_BLACK,
@@ -135,38 +177,58 @@ impl TryFrom<u8> for BackgroundColor {
 
     fn try_from(b: u8) -> Result<Self, Self::Error> {
         match b {
-            0x00..=0x07 => Color::try_from(b).map(|c| Self::NoBlink(c)),
-            0x08..=0x0F => Color::try_from(b & 0x07).map(|c| Self::Blink(c)),
+            0x00..=0x07 => CgaColor::try_from(b).map(|c| Self::NoBlink(c)),
+            0x08..=0x0F => CgaColor::try_from(b & 0x07).map(|c| Self::Blink(c)),
             0x10..=0xFF => Err(b),
         }
     }
 }
 
-/// A color that can be used for text in VGA text mode.
+/// A color that can be used for text in VGA text mode. Each of the eight base colors can be either
+/// dark or light when applied to text.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TextColor {
-    Dark(Color),
-    Light(Color),
+    /// Make the text color the dark form of `self.0`.
+    Dark(CgaColor),
+    /// Make the text color the light form of `self.0`.
+    Light(CgaColor),
 }
 
 impl TextColor {
-    pub const BLACK: Self = Self::Dark(Color::Black);
-    pub const BLUE: Self = Self::Dark(Color::Blue);
-    pub const GREEN: Self = Self::Dark(Color::Green);
-    pub const CYAN: Self = Self::Dark(Color::Cyan);
-    pub const RED: Self = Self::Dark(Color::Red);
-    pub const MAGENTA: Self = Self::Dark(Color::Magenta);
-    pub const BROWN: Self = Self::Dark(Color::Brown);
-    pub const LIGHT_GRAY: Self = Self::Dark(Color::LightGray);
-    pub const DARK_GRAY: Self = Self::Light(Color::Black);
-    pub const LIGHT_BLUE: Self = Self::Light(Color::Blue);
-    pub const LIGHT_GREEN: Self = Self::Light(Color::Green);
-    pub const LIGHT_CYAN: Self = Self::Light(Color::Cyan);
-    pub const LIGHT_RED: Self = Self::Light(Color::Red);
-    pub const PINK: Self = Self::Light(Color::Magenta);
-    pub const YELLOW: Self = Self::Light(Color::Brown);
-    pub const WHITE: Self = Self::Light(Color::LightGray);
+    /// The dark form of `Color::Black`.
+    pub const BLACK: Self = Self::Dark(CgaColor::Black);
+    /// The dark form of `Color::Blue`.
+    pub const BLUE: Self = Self::Dark(CgaColor::Blue);
+    /// The dark form of `Color::Green`.
+    pub const GREEN: Self = Self::Dark(CgaColor::Green);
+    /// The dark form of `Color::Cyan`.
+    pub const CYAN: Self = Self::Dark(CgaColor::Cyan);
+    /// The dark form of `Color::Red`.
+    pub const RED: Self = Self::Dark(CgaColor::Red);
+    /// The dark form of `Color::Magenta`.
+    pub const MAGENTA: Self = Self::Dark(CgaColor::Magenta);
+    /// The dark form of `Color::Brown`.
+    pub const BROWN: Self = Self::Dark(CgaColor::Brown);
+    /// The dark form of `Color::LightGray`.
+    pub const LIGHT_GRAY: Self = Self::Dark(CgaColor::LightGray);
+    /// The light form of `Color::Black`.
+    pub const DARK_GRAY: Self = Self::Light(CgaColor::Black);
+    /// The light form of `Color::Blue`.
+    pub const LIGHT_BLUE: Self = Self::Light(CgaColor::Blue);
+    /// The light form of `Color::Green`.
+    pub const LIGHT_GREEN: Self = Self::Light(CgaColor::Green);
+    /// The light form of `Color::Cyan`.
+    pub const LIGHT_CYAN: Self = Self::Light(CgaColor::Cyan);
+    /// The light form of `Color::Red`.
+    pub const LIGHT_RED: Self = Self::Light(CgaColor::Red);
+    /// The light form of `Color::Magenta`.
+    pub const PINK: Self = Self::Light(CgaColor::Magenta);
+    /// The light form of `Color::Brown`.
+    pub const YELLOW: Self = Self::Light(CgaColor::Brown);
+    /// The light form of `Color::LightGray`.
+    pub const WHITE: Self = Self::Light(CgaColor::LightGray);
 
+    /// Get an iterator over the text colors.
     pub fn colors() -> impl Iterator<Item = Self> {
         [
             Self::BLACK,
@@ -205,13 +267,14 @@ impl TryFrom<u8> for TextColor {
 
     fn try_from(b: u8) -> Result<Self, Self::Error> {
         match b {
-            0x00..=0x07 => Color::try_from(b).map(|c| Self::Dark(c)),
-            0x08..=0x0F => Color::try_from(b & 0x07).map(|c| Self::Light(c)),
+            0x00..=0x07 => CgaColor::try_from(b).map(|c| Self::Dark(c)),
+            0x08..=0x0F => CgaColor::try_from(b & 0x07).map(|c| Self::Light(c)),
             0x10..=0xFF => Err(b),
         }
     }
 }
 
+/// A combination text color and character color.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct CharColor(pub u8);
@@ -241,6 +304,7 @@ impl Buffer {
     const HEIGHT: usize = 24;
 }
 
+/// A writer to a VGA-like output buffer.
 pub struct Writer {
     column: usize,
     color: CharColor,
@@ -248,17 +312,20 @@ pub struct Writer {
 }
 
 lazy_static! {
+    /// The singleton `Writer` instance.
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column: 0,
-        color: CharColor(0x0b),
+        color: CharColor::from(Writer::DEFAULT_COLOR_PAIR),
         buffer: unsafe { (0xb_8000 as *mut Buffer).as_mut().unwrap() },
     });
 }
 
 impl Writer {
+    /// The initial color for the `Writer`.
     pub const DEFAULT_COLOR_PAIR: (BackgroundColor, TextColor) =
         (BackgroundColor::SOLID_BLACK, TextColor::LIGHT_GREEN);
 
+    /// Start a new line in the `Writer`.
     pub fn crlf(&mut self) {
         for line in 1..Buffer::HEIGHT {
             for col in 0..Buffer::CHARS_PER_LINE {
@@ -274,10 +341,12 @@ impl Writer {
         self.column = 0;
     }
 
+    /// Set the color for all new characters written to the `Writer`.
     pub fn set_color(&mut self, color: CharColor) {
         self.color = color;
     }
 
+    /// Write the bytestring `bytes` to the `Writer` in the current color.
     pub fn write<Bytes>(&mut self, bytes: Bytes)
     where
         Bytes: IntoIterator<Item = u8>,
@@ -285,6 +354,7 @@ impl Writer {
         bytes.into_iter().for_each(|byte| self.write_byte(byte));
     }
 
+    /// Write the byte `byte` to the `Writer` in the current color.
     pub fn write_byte(&mut self, byte: u8) {
         let byte = match byte {
             b'\n' => return self.crlf(),
@@ -314,17 +384,21 @@ pub fn _print(args: Arguments) {
     super::print_to(&mut *WRITER.lock(), args, "VGA port");
 }
 
+/// Print a formatted string to the VGA text buffer with the current color.
 #[macro_export]
 macro_rules! vga_print {
     ($($arg:tt)*) => ($crate::io::vga_text::_print(format_args!($($arg)*)));
 }
 
+/// Print a formatted string to the VGA text buffer with the current color. Terminate with a
+/// newline.
 #[macro_export]
 macro_rules! vga_println {
     () => ($crate::vga_print!("\n"));
     ($($arg:tt)*) => ($crate::vga_print!("{}\n", format_args!($($arg)*)));
 }
 
+/// Set the color to use for the VGA text buffer until a different color is selected.
 #[macro_export]
 macro_rules! set_vga_color {
     ($color:expr) => {
@@ -345,21 +419,21 @@ mod test {
     #[test_case]
     fn test_color_from_0() {
         print!("{} test_color_from_0... ", TEST_PREFIX);
-        assert!(Color::try_from(0x00).ok().is_some());
+        assert!(CgaColor::try_from(0x00).ok().is_some());
         println!("[ok]");
     }
 
     #[test_case]
     fn test_color_from_7() {
         print!("{} test_color_from_7... ", TEST_PREFIX);
-        assert!(Color::try_from(0x07).ok().is_some());
+        assert!(CgaColor::try_from(0x07).ok().is_some());
         println!("[ok]");
     }
 
     #[test_case]
     fn test_color_from_8() {
         print!("{} test_color_from_8... ", TEST_PREFIX);
-        assert!(Color::try_from(0x08).ok().is_none());
+        assert!(CgaColor::try_from(0x08).ok().is_none());
         println!("[ok]");
     }
 

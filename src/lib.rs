@@ -1,3 +1,5 @@
+//! A library which can be used to create an operating system.
+
 #![no_std]
 #![cfg_attr(test, no_main)]
 #![feature(custom_test_frameworks)]
@@ -6,10 +8,12 @@
 
 use core::panic::PanicInfo;
 
+/// Tools for input and output of bytes.
 pub mod io;
 
-use io::vga_text::Writer;
+use io::vga_text::{BackgroundColor, TextColor, Writer};
 
+/// QEMU-specific functionality.
 pub mod qemu;
 
 use qemu::QemuExitCode;
@@ -25,6 +29,7 @@ pub fn draw_vga_test() {
     }
 }
 
+/// The function to run the tests.
 pub fn test_runner(tests: &[&dyn Fn()]) {
     serial_println!("Running {} tests", tests.len());
     tests.iter().for_each(|test| test());
@@ -33,6 +38,7 @@ pub fn test_runner(tests: &[&dyn Fn()]) {
     qemu::exit_qemu(QemuExitCode::Success);
 }
 
+/// The panic implementation for the test framework.
 pub fn test_panic(info: &PanicInfo) -> ! {
     serial_println!("[failed]\n");
     serial_println!("Error: {}\n", info);
@@ -40,6 +46,7 @@ pub fn test_panic(info: &PanicInfo) -> ! {
     qemu::exit_qemu(QemuExitCode::Failure)
 }
 
+/// The panic implementation for when the panic message can be printed to stdout.
 pub fn no_test_panic(info: &PanicInfo) -> ! {
     set_stdout_color!(Writer::DEFAULT_COLOR_PAIR);
     println!("{}\n", info);

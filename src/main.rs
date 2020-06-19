@@ -11,13 +11,7 @@
 
 use core::panic::PanicInfo;
 
-#[macro_use]
-extern crate rust_os;
-
-use rust_os::{
-    io::vga_text::{BackgroundColor, TextColor, Writer},
-    qemu::{self, QemuExitCode},
-};
+use rust_os::qemu::{self, QemuExitCode};
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
