@@ -8,6 +8,7 @@
 
 use core::panic::PanicInfo;
 
+/// Tools for handling CPU exceptions.
 pub mod cpu_exception;
 
 /// Tools for input and output of bytes.

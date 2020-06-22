@@ -15,6 +15,7 @@ use core::convert::TryFrom;
 /// exception is related to a descriptor in the Global Descriptor Table.
 /// * Bits 15-3 are the index into the appropriate Descriptor Table as determined by bits 2-1.
 #[repr(u8)]
+#[derive(Clone, Copy, Debug)]
 pub enum CpuException {
     /// The result of executing `DIV` or `IDIV` with 0 as the denominator. Sometimes also thrown
     /// when the result of the instruction is too large to fit in the destination.
@@ -76,6 +77,7 @@ pub enum CpuException {
     /// # Error Code
     /// The error code is always 0.
     DoubleFault = 0x08,
+    /// A general protection fault from an external FPU.
     #[deprecated(note = "Not applicable with integrated FPU.")]
     CoprocessorSegmentOverrun = 0x09,
     /// The result of an attempt to reference an invalid stack-segment selector.
