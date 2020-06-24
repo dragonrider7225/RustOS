@@ -3,8 +3,6 @@ use core::{
     fmt::{self, Arguments, Write},
 };
 
-use lazy_static::lazy_static;
-
 use spin::Mutex;
 
 use volatile::Volatile;
@@ -324,6 +322,11 @@ impl Writer {
     /// The initial color for the `Writer`.
     pub const DEFAULT_COLOR_PAIR: (BackgroundColor, TextColor) =
         (BackgroundColor::SOLID_BLACK, TextColor::LIGHT_GREEN);
+
+    /// Get the current color for the `Writer`.
+    pub fn color(&self) -> CharColor {
+        self.color
+    }
 
     /// Start a new line in the `Writer`.
     pub fn crlf(&mut self) {

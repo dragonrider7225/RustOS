@@ -1,5 +1,8 @@
 use core::convert::TryFrom;
 
+/// Tools related to handling interrupts.
+pub mod interrupts;
+
 /// An exception thrown by the CPU.
 /// The documentation on the various exceptions is based on the page at
 /// [the OSDev Wiki](https://wiki.osdev.org/Exceptions).
@@ -41,6 +44,7 @@ pub enum CpuException {
     /// Although the exception does not push an error code, the debug registers contain information
     /// about the exception.
     Debug = 0x01,
+    /// TODO: Add documentation.
     NonMaskableInterrupt = 0x02,
     /// The result of the `INT3` instruction. Some debug software implements the insertion of
     /// breakpoints by replacing the targeted instruction with `INT3` until the instruction is
@@ -187,8 +191,10 @@ pub enum CpuException {
     /// Although the exception does not push an error code, `MXCSR` contains information about the
     /// exception.
     SimdFloatingPointException = 0x13,
+    /// TODO: Add documentation.
     VirtualizationException = 0x14,
     // 0x15..=0x1D reserved for future use.
+    /// TODO: Add documentation.
     SecurityException = 0x1E,
     // 0x1F reserved for future use.
 }
@@ -209,6 +215,7 @@ impl CpuException {
             Self::InvalidOpcode => false,
             Self::DeviceNotAvailable => false,
             Self::DoubleFault => true,
+            #[allow(deprecated)]
             Self::CoprocessorSegmentOverrun => false,
             Self::InvalidTss => false,
             Self::SegmentNotPresent => false,
@@ -241,6 +248,7 @@ impl CpuException {
             Self::InvalidOpcode => true,
             Self::DeviceNotAvailable => true,
             Self::DoubleFault => false,
+            #[allow(deprecated)]
             Self::CoprocessorSegmentOverrun => true,
             Self::InvalidTss => true,
             Self::SegmentNotPresent => true,
@@ -269,6 +277,7 @@ impl CpuException {
             Self::InvalidOpcode => false,
             Self::DeviceNotAvailable => false,
             Self::DoubleFault => false,
+            #[allow(deprecated)]
             Self::CoprocessorSegmentOverrun => false,
             Self::InvalidTss => false,
             Self::SegmentNotPresent => false,
@@ -298,6 +307,7 @@ impl CpuException {
             Self::InvalidOpcode => false,
             Self::DeviceNotAvailable => false,
             Self::DoubleFault => false,
+            #[allow(deprecated)]
             Self::CoprocessorSegmentOverrun => false,
             Self::InvalidTss => false,
             Self::SegmentNotPresent => false,
@@ -329,7 +339,7 @@ impl TryFrom<u8> for CpuException {
             0x07 => Ok(Self::DeviceNotAvailable),
             0x08 => Ok(Self::DoubleFault),
             0x09 => {
-                #[allow(deprecated)] 
+                #[allow(deprecated)]
                 let ret = Ok(Self::CoprocessorSegmentOverrun);
                 ret
             }

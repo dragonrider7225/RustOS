@@ -13,6 +13,7 @@ use rust_os::qemu::{self, QemuExitCode};
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+    rust_os::init();
     test_main();
     qemu::exit_qemu(QemuExitCode::Success)
 }

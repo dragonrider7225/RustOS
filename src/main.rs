@@ -11,6 +11,9 @@
 
 use core::panic::PanicInfo;
 
+#[macro_use]
+extern crate rust_os;
+
 use rust_os::qemu::{self, QemuExitCode};
 
 #[panic_handler]
@@ -25,10 +28,15 @@ fn panic(info: &PanicInfo) -> ! {
 /// The entry point for the binary.
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+    rust_os::init();
     rust_os::draw_vga_test();
+    // Check that the IDT was loaded properly.
+    x86_64::instructions::interrupts::int3();
 
     #[cfg(test)]
     test_main();
+
+    println!("It did not crash!");
 
     // TODO: event loop
 

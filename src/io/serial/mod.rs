@@ -1,7 +1,5 @@
 use core::fmt::Arguments;
 
-use lazy_static::lazy_static;
-
 use spin::Mutex;
 
 use uart_16550::SerialPort;

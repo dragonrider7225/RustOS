@@ -3,12 +3,15 @@ use core::fmt::{Arguments, Write};
 use spin::MutexGuard;
 
 /// Various tools for writing to the serial port.
+#[macro_use]
 pub mod serial;
 
 /// Various tools for writing in VGA text mode.
+#[macro_use]
 pub mod vga_text;
 
 #[cfg(not(test))]
+#[macro_use]
 mod _impl {
     use super::*;
     use vga_text::Writer;
@@ -29,6 +32,7 @@ mod _impl {
 }
 
 #[cfg(test)]
+#[macro_use]
 mod _impl {
     use super::*;
     use uart_16550::SerialPort;

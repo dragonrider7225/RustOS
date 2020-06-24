@@ -1,4 +1,3 @@
-
 /// An exit code for exiting QEMU.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u32)]
