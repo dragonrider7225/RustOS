@@ -22,6 +22,7 @@ pub mod interrupts;
 pub enum CpuException {
     /// The result of executing `DIV` or `IDIV` with 0 as the denominator. Sometimes also thrown
     /// when the result of the instruction is too large to fit in the destination.
+    ///
     /// # Saved Instruction
     /// The saved instruction is the instruction which caused the exception.
     DivideByZero = 0x00,
@@ -34,12 +35,14 @@ pub enum CpuException {
     /// * a task-switch.
     /// In the first two cases, the exception is a Fault. In all other cases, the exception is a
     /// Trap.
+    ///
     /// # Saved Instruction
     /// When the exception is a fault, the saved instruction is the instruction which caused the
     /// exception.
     ///
     /// When the exception is a trap, the saved instruction is the instruction after the
     /// instruction which caused the exception.
+    ///
     /// # Error Code
     /// Although the exception does not push an error code, the debug registers contain information
     /// about the exception.
@@ -50,6 +53,7 @@ pub enum CpuException {
     /// breakpoints by replacing the targeted instruction with `INT3` until the instruction is
     /// reached, at which point it replaces the interrupt with the original instruction and
     /// decrements the instruction pointer.
+    ///
     /// # Saved Instruction
     /// The saved instruction is the instruction after the interrupt.
     Breakpoint = 0x03,
@@ -57,27 +61,45 @@ pub enum CpuException {
     /// * executing the `INTO` instruction while the Overflow bit in `RFLAGS` is set, or
     /// * executing an integer division instruction whose result is too large to fit in the target
     /// (int::MIN / -1).
+    ///
     /// # Saved Instruction
     /// The saved instruction is the instruction after the `INTO` instruction or the integer
     /// division instruction that overflowed.
     Overflow = 0x04,
     /// The result of executing `BOUND` with an index outside of the array.
+    ///
     /// # Saved Instruction
     /// The saved instruction is the instruction which caused the exception.
     BoundRangeExceeded = 0x05,
     /// The result of a failure to parse an instruction.
+    ///
     /// # Saved Instruction
     /// The saved instruction is the invalid instruction.
     InvalidOpcode = 0x06,
     /// The result of executing an FPU instruction when there is no FPU or the FPU has been
     /// disabled by a flag in `CR0`.
+    ///
     /// # Saved Instruction
     /// The saved instruction is the instruction which caused the exception.
     DeviceNotAvailable = 0x07,
-    /// The result of any exception for which no handler could be called.
+    /// The result of [`InvalidTss`], [`SegmentNotPresent`], [`StackSegmentFault`], or
+    /// [`GeneralProtectionFault`] being raised while any of those four or [`DivideByZero`] or
+    /// [`PageFault`] is being handled or [`PageFault`] being raised while it is being handled.
+    ///
+    /// This list is taken from section 8.2.9 of [the AMD64 Architecture Programmer's Manual,
+    /// Volume 2: System Programming](https://www.amd.com/system/files/TechDocs/24593.pdf).
+    ///
+    /// [`DivideByZero`]: #variant.DivideByZero
+    /// [`GeneralProtectionFault`]: #variant.GeneralProtectionFault
+    /// [`InvalidTss`]: #variant.InvalidTss
+    /// [`PageFault`]: #variant.PageFault
+    /// [`SegmentNotPresent`]: #variant.SegmentNotPresent
+    /// [`StackSegmentFault`]: #variant.StackSegmentFault
+    ///
     /// # Saved Instruction
     /// The saved instruction is undefined. A process which double faults *cannot* be recovered and
     /// must be terminated.
+    ///
     /// # Error Code
     /// The error code is always 0.
     DoubleFault = 0x08,
@@ -85,18 +107,24 @@ pub enum CpuException {
     #[deprecated(note = "Not applicable with integrated FPU.")]
     CoprocessorSegmentOverrun = 0x09,
     /// The result of an attempt to reference an invalid stack-segment selector.
+    ///
     /// # Saved Instruction
     /// Usually, the saved instruction is the first instruction of the new task. However, if the
     /// exception occurred before loading the segment selectors from the TSS, the saved instruction
     /// is instead the instruction which caused the exception.
+    ///
     /// # Error Code
     /// The error code is a selector index.
     InvalidTss = 0x0A,
     /// The result of an attempt to load a segment or gate which is not present unless the load is
-    /// the result of resolving a stack-segment reference, in which case `StackSegmentFault` is
+    /// the result of resolving a stack-segment reference, in which case [`StackSegmentFault`] is
     /// raised instead.
+    ///
+    /// [`StackSegmentFault`]: #variant.StackSegmentFault
+    ///
     /// # Saved Instruction
     /// The saved instruction is the instruction which caused the exception.
+    ///
     /// # Error Code
     /// The error code is the segment selector index of the segment descriptor which caused the
     /// exception.
@@ -108,25 +136,31 @@ pub enum CpuException {
     /// * the execution of any instruction using `ESP` or `EBP` as a base register while the stack
     /// address is not in canonical form, or
     /// * failure of the stack-limit check.
-    /// `StackSegmentFault` is separate from `SegmentNotPresent` because the latter pushes `EIP`,
+    ///
+    /// `StackSegmentFault` is separate from [`SegmentNotPresent`] because the latter pushes `EIP`,
     /// `CS`, `EFLAGS`, `ESP`, and `SS` to the stack, which can't be done under any condition which
     /// would raise `StackSegmentFault`.
+    ///
+    /// [`SegmentNotPresent`]: #variant.SegmentNotPresent
+    ///
     /// # Saved Instruction
     /// The saved instruction is the instruction which caused the exception.
+    ///
     /// # Error Code
     /// The error code is the stack-segment selector index in the first case.
     /// The error code is 0 in all other cases.
     StackSegmentFault = 0x0C,
-    /// A `GeneralProtectionFault` is the result of taking an action without having the associated
-    /// privilege.
+    /// The result of taking an action without having the associated privilege.
     /// For example:
     /// * segment error, or
     /// * executing a privileged instruction with non-zero `CPL`, or
     /// * writing a 1 in a reserved register field, or
     /// * referencing or accessing a null-descriptor, or
     /// * trying to access an unimplemented register, e.g., `CR7`.
+    ///
     /// # Saved Instruction
     /// The saved instruction is the instruction which caused the exception.
+    ///
     /// # Error Code
     /// The error code is the segment selector index when applicable.
     /// The error code is 0 in all other cases.
@@ -138,8 +172,10 @@ pub enum CpuException {
     /// * a failed protection check, or
     /// * an invalid attempt to access a page directory entry or page table entry with its reserved
     /// bit set to 1.
+    ///
     /// # Saved Instruction
     /// The saved instruction is the instruction which caused the exception.
+    ///
     /// # Error Code
     /// The five least-significant bits are set or cleared as follows:
     /// * Bit 0 is the Present bit. When set, the page fault was caused by a page-protection
@@ -160,10 +196,12 @@ pub enum CpuException {
     /// The result of the execution of `FWAIT`, `WAIT`, or any waiting floating-point instruction
     /// while the Numeric Error bit of `CR0` is set and the exception bit in the x87 floating point
     /// status-word register is set.
+    ///
     /// # Saved Instruction
     /// The saved instruction is the instruction which was about to be executed when the exception
     /// occurred. The x87 instruction pointer register contains the address of the last instruction
     /// which caused the exception.
+    ///
     /// # Error Code
     /// Although the exception does not push an error code, the x87 status-word register contains
     /// information about the exception.
@@ -171,22 +209,29 @@ pub enum CpuException {
     /// The result of an unaligned memory data reference while alignment checking is enabled and
     /// `CPL` is 3. To enable alignment checking, set the Alignment Mask bit in `CR0` and the
     /// Alignment Check bit in `RFLAGS`.
+    ///
     /// # Saved Instruction
     /// The saved instruction is the instruction which caused the exception.
     AlignmentCheck = 0x11,
     /// The result of the processor detecting internal errors while the Machine Check Exception bit
     /// of `CR4` is set. The exact implementation of the control flow that throws this exception is
     /// model specific and is not required to exist at all.
+    ///
     /// # Saved Instruction
     /// The saved instruction is implementation-dependent.
+    ///
     /// # Error Code
     /// The location of additional information about the error is implementation-dependent.
     MachineCheck = 0x12,
     /// The result of an unmasked 128-bit media floating-point exception while the OSXMMEXCPT bit
-    /// in `CR4` is set. If OSXMMEXCPT is not set, then this exception is replaced by Undefined
-    /// Opcode.
+    /// in `CR4` is set. If OSXMMEXCPT is not set, then this exception is replaced by
+    /// [`InvalidOpcode`].
+    ///
+    /// [`InvalidOpcode`]: #variant.InvalidOpcode
+    ///
     /// # Saved Instruction
     /// The saved instruction is the instruction which caused the exception.
+    ///
     /// # Error Code
     /// Although the exception does not push an error code, `MXCSR` contains information about the
     /// exception.
@@ -201,9 +246,12 @@ pub enum CpuException {
 
 impl CpuException {
     /// An exception is an *abort* if the process that threw it cannot be meaningfully recovered
-    /// under any circumstances. The only exceptions that are abort are `DoubleFault` and
-    /// `MachineCheck` (and `TripleFault`, but that is only ever handled by resetting the processor
-    /// and thus cannot be thrown and does not require a representation).
+    /// under any circumstances. The only exceptions that are abort are [`DoubleFault`] and
+    /// [`MachineCheck`] (and `TripleFault`, but that is only ever handled by resetting the
+    /// processor and thus cannot be thrown and does not require a representation).
+    ///
+    /// [`DoubleFault`]: #variant.DoubleFault
+    /// [`MachineCheck`]: #variant.MachineCheck
     pub fn is_abort(&self) -> bool {
         match self {
             Self::DivideByZero => false,
@@ -232,11 +280,28 @@ impl CpuException {
     }
 
     /// An exception is a *fault* if the problem that caused it can be corrected and the process
-    /// can continue as if the exception had never been thrown. The faults are `DivideByZero`,
-    /// `Debug` (sometimes), `BoundRangeExceeded`, `InvalidOpcode`, `DeviceNotAvailable`,
-    /// `CoprocessorSegmentOverrun`, `InvalidTss`, `SegmentNotPresent`, `StackSegmentFault`,
-    /// `GeneralProtectionFault`, `PageFault`, `X87FloatingPointException`, `AlignmentCheck`,
-    /// `SimdFloatingPointException`, and `VirtualizationException`.
+    /// can continue as if the exception had never been thrown. The faults are [`DivideByZero`],
+    /// [`Debug`] (sometimes), [`BoundRangeExceeded`], [`InvalidOpcode`], [`DeviceNotAvailable`],
+    /// [`CoprocessorSegmentOverrun`], [`InvalidTss`], [`SegmentNotPresent`],
+    /// [`StackSegmentFault`], [`GeneralProtectionFault`], [`PageFault`],
+    /// [`X87FloatingPointException`], [`AlignmentCheck`], [`SimdFloatingPointException`], and
+    /// [`VirtualizationException`].
+    ///
+    /// [`AlignmentCheck`]: #variant.AlignmentCheck
+    /// [`BoundRangeExceeded`]: #variant.BoundRangeExceeded
+    /// [`CoprocessorSegmentOverrun`]: #variant.CoprocessorSegmentOverrun
+    /// [`Debug`]: #variant.Debug
+    /// [`DeviceNotAvailable`]: #variant.DeviceNotAvailable
+    /// [`DivideByZero`]: #variant.DivideByZero
+    /// [`GeneralProtectionFault`]: #variant.GeneralProtectionFault
+    /// [`InvalidOpcode`]: #variant.InvalidOpcode
+    /// [`InvalidTss`]: #variant.InvalidTss
+    /// [`PageFault`]: #variant.PageFault
+    /// [`SegmentNotPresent`]: #variant.SegmentNotPresent
+    /// [`SimdFloatingPointException`]: #variant.SimdFloatingPointException
+    /// [`StackSegmentFault`]: #variant.StackSegmentFault
+    /// [`VirtualizationException`]: #variant.VirtualizationException
+    /// [`X87FloatingPointException`]: #variant.X87FloatingPointException
     pub fn is_fault(&self) -> bool {
         match self {
             Self::DivideByZero => true,
@@ -265,7 +330,9 @@ impl CpuException {
     }
 
     /// The exception is caused by a hardware interrupt instead of something the program did. The
-    /// only such exception is `NonMaskableInterrupt`
+    /// only such exception is [`NonMaskableInterrupt`].
+    ///
+    /// [`NonMaskableInterrupt`]: #variant.NonMaskableInterrupt
     pub fn is_interrupt(&self) -> bool {
         match self {
             Self::DivideByZero => false,
@@ -294,8 +361,12 @@ impl CpuException {
     }
 
     /// An exception is a *trap* if the instruction that caused it is allowed to complete normally
-    /// *before* the exception is thrown. The traps are `Debug` (sometimes), `Breakpoint`, and
-    /// `Overflow`.
+    /// *before* the exception is thrown. The traps are [`Debug`] (sometimes), [`Breakpoint`], and
+    /// [`Overflow`].
+    ///
+    /// [`Breakpoint`]: #variant.Breakpoint
+    /// [`Debug`]: #variant.Debug
+    /// [`Overflow`]: #variant.Overflow
     pub fn is_trap(&self) -> bool {
         match self {
             Self::DivideByZero => false,
