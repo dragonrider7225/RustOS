@@ -30,8 +30,14 @@ fn panic(info: &PanicInfo) -> ! {
 pub extern "C" fn _start() -> ! {
     rust_os::init();
     rust_os::draw_vga_test();
+
     // Check that the IDT was loaded properly.
     x86_64::instructions::interrupts::int3();
+
+    // Intentionally trigger a page fault.
+    unsafe {
+        *(0xdeadbeef as *mut u64) = 42;
+    }
 
     #[cfg(test)]
     test_main();
