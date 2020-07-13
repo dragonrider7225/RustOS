@@ -21,6 +21,9 @@ use io::vga_text::{BackgroundColor, TextColor, Writer};
 pub mod cpu_exception;
 use cpu_exception::interrupts;
 
+/// Tools for handling the Global Descriptor Table.
+pub mod gdt;
+
 /// QEMU-specific functionality.
 pub mod qemu;
 use qemu::QemuExitCode;
@@ -40,6 +43,7 @@ pub fn draw_vga_test() {
 
 /// Initialize various parts of the OS.
 pub fn init() {
+    gdt::init();
     interrupts::init_idt();
 }
 
