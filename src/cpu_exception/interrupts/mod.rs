@@ -1,4 +1,4 @@
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
+use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 
 lazy_static! {
     static ref IDT: InterruptDescriptorTable = make_idt();
@@ -16,6 +16,14 @@ fn make_idt() -> InterruptDescriptorTable {
         idt.double_fault.set_handler_fn(double_fault_handler)
             .set_stack_index(crate::gdt::DOUBLE_FAULT_IST_INDEX);
     }
+    unsafe {
+        idt.stack_segment_fault.set_handler_fn(stack_segment_fault_handler)
+            .set_stack_index(crate::gdt::STACK_SEGMENT_FAULT_IST_INDEX);
+    }
+    unsafe {
+        idt.page_fault.set_handler_fn(page_fault_handler)
+            .set_stack_index(crate::gdt::PAGE_FAULT_IST_INDEX);
+    }
     idt
 }
 
@@ -25,6 +33,17 @@ extern "x86-interrupt" fn breakpoint_handler(frame: &mut InterruptStackFrame) {
 
 extern "x86-interrupt" fn double_fault_handler(frame: &mut InterruptStackFrame, _: u64) -> ! {
     panic!("EXCEPTION: DOUBLE FAULT\n{:#?}", frame)
+}
+
+extern "x86-interrupt" fn stack_segment_fault_handler(frame: &mut InterruptStackFrame, _: u64) {
+    panic!("EXCEPTION: STACK SEGMENT FAULT\n{:#?}", frame)
+}
+
+extern "x86-interrupt" fn page_fault_handler(
+    frame: &mut InterruptStackFrame,
+    _: PageFaultErrorCode,
+) {
+    panic!("EXCEPTION: PAGE FAULT\n{:#?}", frame)
 }
 
 #[cfg(test)]
